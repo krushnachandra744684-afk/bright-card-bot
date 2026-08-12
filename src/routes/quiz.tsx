@@ -125,7 +125,7 @@ function QuizScreen() {
 
       <div className="mt-7 flex flex-col gap-3">
         {q!.options.map((opt: string, i: number) => {
-          const isAnswer = i === q.correctAnswerIndex;
+          const isAnswer = i === q!.correctAnswerIndex;
           const isPicked = selected === i;
           const revealed = selected !== null;
 
