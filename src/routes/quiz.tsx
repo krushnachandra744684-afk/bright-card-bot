@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { quizQuestions } from "@/lib/study-data";
+import type { QuizQuestion } from "@/lib/study-data";
+import { loadStudySet } from "@/lib/study-store";
 import { ArrowLeft, Check, X, Trophy } from "lucide-react";
 
 export const Route = createFileRoute("/quiz")({
@@ -24,13 +25,18 @@ export const Route = createFileRoute("/quiz")({
 });
 
 function QuizScreen() {
+  const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
   const [done, setDone] = useState(false);
 
-  const total = quizQuestions.length;
-  const q = quizQuestions[index]!;
+  const total = questions.length;
+  const q = questions[index];
+
+  useEffect(() => {
+    setQuestions(loadStudySet().quiz);
+  }, []);
 
   const reset = () => {
     setIndex(0);
@@ -40,9 +46,9 @@ function QuizScreen() {
   };
 
   const choose = (i: number) => {
-    if (selected !== null) return;
+    if (selected !== null || !q) return;
     setSelected(i);
-    if (i === q.answerIndex) setScore((s) => s + 1);
+    if (i === q.correctAnswerIndex) setScore((s) => s + 1);
   };
 
   const next = () => {
@@ -53,6 +59,14 @@ function QuizScreen() {
     setSelected(null);
     setIndex((i) => i + 1);
   };
+
+  if (!q && !done) {
+    return (
+      <main className="flex min-h-screen items-center justify-center px-5 text-sm text-muted-foreground">
+        Loading your quiz…
+      </main>
+    );
+  }
 
   if (done) {
     const pct = Math.round((score / total) * 100);
@@ -103,15 +117,15 @@ function QuizScreen() {
       <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
-          style={{ width: `${((index + 1) / total) * 100}%` }}
+          style={{ width: `${total ? ((index + 1) / total) * 100 : 0}%` }}
         />
       </div>
 
-      <h1 className="mt-10 text-2xl font-semibold leading-snug">{q.question}</h1>
+      <h1 className="mt-10 text-2xl font-semibold leading-snug">{q!.question}</h1>
 
       <div className="mt-7 flex flex-col gap-3">
-        {q.options.map((opt, i) => {
-          const isAnswer = i === q.answerIndex;
+        {q!.options.map((opt: string, i: number) => {
+          const isAnswer = i === q!.correctAnswerIndex;
           const isPicked = selected === i;
           const revealed = selected !== null;
 
@@ -141,7 +155,12 @@ function QuizScreen() {
       {selected !== null && (
         <div className="mt-auto pt-8">
           <p className="mb-3 text-center text-sm text-muted-foreground">
-            {selected === q.answerIndex ? "Correct!" : "Not quite — check the highlighted answer."}
+            {selected === q!.correctAnswerIndex
+              ? "Correct!"
+              : "Not quite — check the highlighted answer."}
+          </p>
+          <p className="mb-4 text-center text-xs leading-relaxed text-muted-foreground">
+            {q!.explanation}
           </p>
           <Button className="h-12 w-full rounded-xl font-semibold" onClick={next}>
             {index === total - 1 ? "See results" : "Next question"}

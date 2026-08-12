@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { flashcards } from "@/lib/study-data";
+import type { Flashcard } from "@/lib/study-data";
+import { loadStudySet } from "@/lib/study-store";
 import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react";
 
 export const Route = createFileRoute("/flashcards")({
@@ -23,11 +24,17 @@ export const Route = createFileRoute("/flashcards")({
 });
 
 function FlashcardsScreen() {
+  const [cards, setCards] = useState<Flashcard[]>([]);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const navigate = useNavigate();
 
-  const card = flashcards[index]!;
+  useEffect(() => {
+    setCards(loadStudySet().flashcards);
+  }, []);
+
+  const flashcards = cards;
+  const card = flashcards[index];
   const total = flashcards.length;
   const isLast = index === total - 1;
 
@@ -46,14 +53,14 @@ function FlashcardsScreen() {
           <ArrowLeft className="h-4 w-4" /> Notes
         </Link>
         <span className="text-sm font-medium text-muted-foreground">
-          Card {index + 1} of {total}
+          Card {Math.min(index + 1, Math.max(total, 1))} of {total}
         </span>
       </div>
 
       <div className="mt-4 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
         <div
           className="h-full rounded-full bg-primary transition-all duration-300"
-          style={{ width: `${((index + 1) / total) * 100}%` }}
+          style={{ width: `${total ? ((index + 1) / total) * 100 : 0}%` }}
         />
       </div>
 
@@ -68,12 +75,12 @@ function FlashcardsScreen() {
             <span className="text-xs uppercase tracking-widest text-muted-foreground">
               Question
             </span>
-            <p className="mt-4 text-2xl font-semibold leading-snug">{card.front}</p>
+            <p className="mt-4 text-2xl font-semibold leading-snug">{card?.question}</p>
             <span className="mt-6 text-xs text-muted-foreground">Tap to reveal</span>
           </div>
           <div className="absolute inset-0 flex flex-col items-center justify-center rounded-3xl bg-card p-8 text-center flip-face flip-face-back glow-ring">
             <span className="text-xs uppercase tracking-widest text-primary">Answer</span>
-            <p className="mt-4 text-lg leading-relaxed text-card-foreground">{card.back}</p>
+            <p className="mt-4 text-lg leading-relaxed text-card-foreground">{card?.answer}</p>
           </div>
         </div>
       </button>

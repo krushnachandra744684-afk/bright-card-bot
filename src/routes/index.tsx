@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Layers, ListChecks } from "lucide-react";
+import { generateStudySet } from "@/lib/study.functions";
+import { saveStudySet } from "@/lib/study-store";
+import { Sparkles, Layers, ListChecks, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -29,7 +33,28 @@ Osmosis is the movement of water across a semi-permeable membrane.`;
 
 function Landing() {
   const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const generate = useServerFn(generateStudySet);
+
+  const tooShort = notes.trim().length < 20;
+
+  const handleGenerate = async () => {
+    if (tooShort || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const set = await generate({ data: { notes: notes.trim() } });
+      saveStudySet(set);
+      navigate({ to: "/flashcards" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-16 pt-14">
@@ -69,10 +94,29 @@ function Landing() {
       <Button
         size="lg"
         className="mt-5 h-12 w-full rounded-xl text-base font-semibold"
-        onClick={() => navigate({ to: "/flashcards" })}
+        onClick={handleGenerate}
+        disabled={tooShort || loading}
       >
-        Generate study set
+        {loading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" /> Generating your study set…
+          </>
+        ) : (
+          "Generate study set"
+        )}
       </Button>
+
+      {tooShort && notes.length > 0 && (
+        <p className="mt-2 text-center text-xs text-muted-foreground">
+          Add a bit more detail (at least 20 characters).
+        </p>
+      )}
+      {error && (
+        <p className="mt-3 rounded-lg bg-destructive/15 p-3 text-center text-xs text-destructive">
+          {error}
+        </p>
+      )}
+
 
       <div className="mt-10 grid grid-cols-2 gap-3">
         <Link
