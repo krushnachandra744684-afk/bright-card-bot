@@ -1,8 +1,12 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Sparkles, Layers, ListChecks } from "lucide-react";
+import { generateStudySet } from "@/lib/study.functions";
+import { saveStudySet } from "@/lib/study-store";
+import { Sparkles, Layers, ListChecks, Loader2 } from "lucide-react";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
