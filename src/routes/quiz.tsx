@@ -30,7 +30,7 @@ function QuizScreen() {
   const [done, setDone] = useState(false);
 
   const total = quizQuestions.length;
-  const q = quizQuestions[index];
+  const q = quizQuestions[index]!;
 
   const reset = () => {
     setIndex(0);

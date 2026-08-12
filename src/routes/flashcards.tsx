@@ -27,7 +27,7 @@ function FlashcardsScreen() {
   const [flipped, setFlipped] = useState(false);
   const navigate = useNavigate();
 
-  const card = flashcards[index];
+  const card = flashcards[index]!;
   const total = flashcards.length;
   const isLast = index === total - 1;
 
