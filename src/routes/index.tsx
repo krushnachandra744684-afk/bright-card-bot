@@ -33,7 +33,28 @@ Osmosis is the movement of water across a semi-permeable membrane.`;
 
 function Landing() {
   const [notes, setNotes] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
+  const generate = useServerFn(generateStudySet);
+
+  const tooShort = notes.trim().length < 20;
+
+  const handleGenerate = async () => {
+    if (tooShort || loading) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const set = await generate({ data: { notes: notes.trim() } });
+      saveStudySet(set);
+      navigate({ to: "/flashcards" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-xl flex-col px-5 pb-16 pt-14">
